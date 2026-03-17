@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14  # macOS runner with Xcode installed
+    runs-on: macos-15  # macOS runner with Xcode installed
     steps:
       - name: Checkout
         uses: actions/checkout@v4
