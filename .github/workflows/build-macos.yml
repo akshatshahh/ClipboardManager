@@ -1,0 +1,43 @@
+# Build Clipboard Manager for macOS and upload the app as a downloadable artifact.
+# No Xcode needed on your machine: push code, then download the built app from the Actions tab.
+
+name: Build macOS app
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:  # Allow "Run workflow" from the Actions tab
+
+jobs:
+  build:
+    runs-on: macos-14  # macOS runner with Xcode installed
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build app
+        run: |
+          xcodebuild \
+            -project "Clipboard Manager.xcodeproj" \
+            -scheme "Clipboard Manager" \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            DEVELOPMENT_TEAM="" \
+            build
+
+      - name: Zip app
+        run: |
+          cd build/Build/Products/Release
+          zip -r ../../../../Clipboard-Manager-macos.zip "Clipboard Manager.app"
+          cd ../../../../
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Clipboard-Manager-macos
+          path: Clipboard-Manager-macos.zip
