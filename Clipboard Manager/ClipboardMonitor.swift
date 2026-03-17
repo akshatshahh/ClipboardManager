@@ -1,11 +1,3 @@
-//
-//  ClipboardMonitor.swift
-//  Clipboard Manager
-//
-//  Created by Akshat on 21/06/25.
-//
-
-
 import Foundation
 import AppKit
 
@@ -37,13 +29,19 @@ class ClipboardMonitor: ObservableObject {
 
                 if let copiedString = pasteboard.string(forType: .string),
                    !copiedString.isEmpty,
-                   copiedString != self.history.first?.text {
+                   copiedString != self.history.first(where: { !$0.pinned })?.text {
 
                     let newEntry = ClipboardEntry(text: copiedString)
 
                     DispatchQueue.main.async {
-                        self.history.insert(newEntry, at: 0)
-                        self.history = Array(self.history.prefix(50))
+                        self.history.removeAll { !$0.pinned && $0.text == copiedString }
+                        self.history.append(newEntry)
+                        let unpinnedCount = self.history.filter { !$0.pinned }.count
+                        if unpinnedCount > 50 {
+                            if let oldest = self.history.first(where: { !$0.pinned }) {
+                                self.history.removeAll { $0.id == oldest.id }
+                            }
+                        }
                         self.saveHistory()
                     }
                 }
@@ -58,7 +56,7 @@ class ClipboardMonitor: ObservableObject {
         lastCopiedItemID = entry.id
         skipNextPasteboardChange = true
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             if self.lastCopiedItemID == entry.id {
                 self.lastCopiedItemID = nil
             }
@@ -68,18 +66,18 @@ class ClipboardMonitor: ObservableObject {
     func togglePin(_ entry: ClipboardEntry) {
         if let index = history.firstIndex(where: { $0.id == entry.id }) {
             history[index].pinned.toggle()
-            reorderHistory()
             saveHistory()
         }
     }
 
-    func clearHistory() {
-        history.removeAll()
+    func deleteEntry(_ entry: ClipboardEntry) {
+        history.removeAll { $0.id == entry.id }
         saveHistory()
     }
 
-    private func reorderHistory() {
-        history.sort { ($0.pinned ? 0 : 1, $0.id.uuidString) < ($1.pinned ? 0 : 1, $1.id.uuidString) }
+    func clearHistory() {
+        history.removeAll { !$0.pinned }
+        saveHistory()
     }
 
     private func saveHistory() {
@@ -94,7 +92,6 @@ class ClipboardMonitor: ObservableObject {
             let decoder = JSONDecoder()
             if let decoded = try? decoder.decode([ClipboardEntry].self, from: data) {
                 history = decoded
-                reorderHistory()
             }
         }
     }
@@ -103,11 +100,21 @@ class ClipboardMonitor: ObservableObject {
         timer?.invalidate()
     }
 
+    var pinnedItems: [ClipboardEntry] {
+        let pinned = history.filter { $0.pinned }
+        if searchQuery.isEmpty { return pinned }
+        return pinned.filter { $0.text.localizedCaseInsensitiveContains(searchQuery) }
+    }
+
+    var recentItems: [ClipboardEntry] {
+        let recent = history
+            .filter { !$0.pinned }
+            .sorted { $0.createdAt > $1.createdAt }
+        if searchQuery.isEmpty { return recent }
+        return recent.filter { $0.text.localizedCaseInsensitiveContains(searchQuery) }
+    }
+
     var filteredHistory: [ClipboardEntry] {
-        if searchQuery.isEmpty {
-            return history
-        } else {
-            return history.filter { $0.text.localizedCaseInsensitiveContains(searchQuery) }
-        }
+        return pinnedItems + recentItems
     }
 }
