@@ -1,5 +1,8 @@
 # Build Clipboard Manager for macOS and upload the app as a downloadable artifact.
-# No Xcode needed on your machine: push code, then download the built app from the Actions tab.
+# On pushes to main/master a GitHub Release tagged "latest" is also created/updated
+# so anyone can download the app from the Releases page without a GitHub account.
+# No Xcode needed on your machine: push code, then download the built app from the
+# Releases tab (or the Actions tab for PR builds).
 
 name: Build macOS app
 
@@ -13,6 +16,8 @@ on:
 jobs:
   build:
     runs-on: macos-15  # macOS runner with Xcode installed
+    permissions:
+      contents: write  # needed to create/update GitHub Releases
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,3 +46,24 @@ jobs:
         with:
           name: Clipboard-Manager-macos
           path: Clipboard-Manager-macos.zip
+
+      # Publish / update the "latest" release so users can download without a GitHub account.
+      # Only runs on direct pushes to main/master (not on pull requests).
+      - name: Publish GitHub Release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Latest Build"
+          body: |
+            Automatically published from the latest commit on `${{ github.ref_name }}`.
+
+            **How to install**
+            1. Download `Clipboard-Manager-macos.zip` below.
+            2. Unzip it and move **Clipboard Manager.app** to your Applications folder.
+            3. On first launch macOS may block the app — right-click the app → **Open**, then confirm.
+
+            Requires macOS 13 (Ventura) or later.
+          prerelease: false
+          make_latest: true
+          files: Clipboard-Manager-macos.zip

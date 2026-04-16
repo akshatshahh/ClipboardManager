@@ -14,6 +14,17 @@ A lightweight, native macOS menu bar clipboard manager built with SwiftUI. It si
 - **Frosted glass UI** -- modern macOS design with material backgrounds and hover effects
 - **Persistent storage** -- history survives app restarts (stored in UserDefaults)
 
+## Download
+
+The easiest way to get the app — no GitHub account required:
+
+1. Go to the [**Releases**](../../releases/latest) page of this repository.
+2. Under *Assets*, download **Clipboard-Manager-macos.zip**.
+3. Unzip it, move **Clipboard Manager.app** to your Applications folder (or anywhere you like), and open it.
+4. On first launch macOS may show a security warning — **right-click the app → Open**, then click **Open** in the dialog.
+
+> The release is rebuilt and published automatically on every push to `main`, so it always reflects the latest code.
+
 ## Requirements
 
 - macOS 13.0 (Ventura) or later
@@ -25,11 +36,9 @@ The repo includes a **GitHub Actions** workflow that builds the app on GitHub’
 
 1. Push this project to a GitHub repo (or fork it).
 2. Open the **Actions** tab and run the **Build macOS app** workflow (or push to `main`/`master` to trigger it).
-3. When the run finishes, open the run and download the **Clipboard-Manager-macos** artifact (a zip of the app).
+3. When the run finishes, a **Latest Build** GitHub Release is created/updated automatically with the zip attached.
 4. Unzip locally, move **Clipboard Manager.app** to Applications (or leave it anywhere), and open it.  
    On first launch, if macOS blocks it: **right-click the app → Open**, then confirm.
-
-You can share the artifact or the unzipped `.app` with other macOS users the same way.
 
 ## Build from Source (Xcode)
 
